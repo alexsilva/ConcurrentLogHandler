@@ -45,7 +45,7 @@ This module supports Python 2.6 and later.
 
 """
 
-__version__ = '0.9.1'
+__version__ = '0.10.1'
 __revision__ = 'lowell87@gmail.com-20130711022321-doutxl7zyzuwss5a 2013-07-10 22:23:21 -0400 [0]'
 __author__ = "Lowell Alleman"
 __all__ = [
