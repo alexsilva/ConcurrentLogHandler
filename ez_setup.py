@@ -31,9 +31,11 @@ except ImportError:
 DEFAULT_VERSION = "0.7.7"
 DEFAULT_URL = "https://pypi.python.org/packages/source/s/setuptools/"
 
+
 def _python_cmd(*args):
     args = (sys.executable,) + args
     return subprocess.call(args) == 0
+
 
 def _install(tarball, install_args=()):
     # extracting the tarball
@@ -109,7 +111,7 @@ def use_setuptools(version=DEFAULT_VERSION, download_base=DEFAULT_URL,
     # making sure we use the absolute path
     to_dir = os.path.abspath(to_dir)
     was_imported = 'pkg_resources' in sys.modules or \
-        'setuptools' in sys.modules
+                   'setuptools' in sys.modules
     try:
         import pkg_resources
     except ImportError:
@@ -121,14 +123,14 @@ def use_setuptools(version=DEFAULT_VERSION, download_base=DEFAULT_URL,
         e = sys.exc_info()[1]
         if was_imported:
             sys.stderr.write(
-            "The required version of setuptools (>=%s) is not available,\n"
-            "and can't be installed while this script is running. Please\n"
-            "install a more recent version first, using\n"
-            "'easy_install -U setuptools'."
-            "\n\n(Currently using %r)\n" % (version, e.args[0]))
+                "The required version of setuptools (>=%s) is not available,\n"
+                "and can't be installed while this script is running. Please\n"
+                "install a more recent version first, using\n"
+                "'easy_install -U setuptools'."
+                "\n\n(Currently using %r)\n" % (version, e.args[0]))
             sys.exit(2)
         else:
-            del pkg_resources, sys.modules['pkg_resources']    # reload ok
+            del pkg_resources, sys.modules['pkg_resources']  # reload ok
             return _do_download(version, download_base, to_dir,
                                 download_delay)
     except pkg_resources.DistributionNotFound:
@@ -200,6 +202,7 @@ def _extractall(self, path=".", members=None):
     if sys.version_info < (2, 4):
         def sorter(dir1, dir2):
             return cmp(dir1.name, dir2.name)
+
         directories.sort(sorter)
         directories.reverse()
     else:
@@ -232,6 +235,7 @@ def _build_install_args(options):
         install_args.append('--user')
     return install_args
 
+
 def _parse_args():
     """
     Parse the command line for options
@@ -248,11 +252,13 @@ def _parse_args():
     # positional arguments are ignored
     return options
 
+
 def main(version=DEFAULT_VERSION):
     """Install or upgrade setuptools and EasyInstall"""
     options = _parse_args()
     tarball = download_setuptools(download_base=options.download_base)
     return _install(tarball, _build_install_args(options))
+
 
 if __name__ == '__main__':
     sys.exit(main())

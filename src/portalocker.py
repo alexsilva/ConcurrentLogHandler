@@ -50,7 +50,6 @@ Version: 0.3
 URL:  https://github.com/WoLpH/portalocker
 """
 
-
 __all__ = [
     "lock",
     "unlock",
@@ -62,21 +61,25 @@ __all__ = [
 
 import os
 
+
 class LockException(Exception):
     # Error codes:
     LOCK_FAILED = 1
+
 
 if os.name == 'nt':
     import win32con
     import win32file
     import pywintypes
+
     LOCK_EX = win32con.LOCKFILE_EXCLUSIVE_LOCK
-    LOCK_SH = 0 # the default
+    LOCK_SH = 0  # the default
     LOCK_NB = win32con.LOCKFILE_FAIL_IMMEDIATELY
     # is there any reason not to reuse the following structure?
     __overlapped = pywintypes.OVERLAPPED()
 elif os.name == 'posix':
     import fcntl
+
     LOCK_EX = fcntl.LOCK_EX
     LOCK_SH = fcntl.LOCK_SH
     LOCK_NB = fcntl.LOCK_NB
@@ -95,7 +98,8 @@ if os.name == 'nt':
             else:
                 # Q:  Are there exceptions/codes we should be dealing with here?
                 raise
-    
+
+
     def unlock(file):
         hfile = win32file._get_osfhandle(file.fileno())
         try:
@@ -117,11 +121,10 @@ elif os.name == 'posix':
             # The exception code varies on different systems so we'll catch
             # every IO error
             raise LockException(*exc_value)
-    
+
+
     def unlock(file):
         fcntl.flock(file.fileno(), fcntl.LOCK_UN)
-
-
 
 if __name__ == '__main__':
     from time import time, strftime, localtime
@@ -132,10 +135,9 @@ if __name__ == '__main__':
     portalocker.lock(log, portalocker.LOCK_EX)
 
     timestamp = strftime("%m/%d/%Y %H:%M:%S\n", localtime(time()))
-    log.write( timestamp )
+    log.write(timestamp)
 
     print "Wrote lines. Hit enter to release lock."
     dummy = sys.stdin.readline()
 
     log.close()
-

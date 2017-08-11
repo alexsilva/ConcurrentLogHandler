@@ -45,14 +45,12 @@ This module supports Python 2.6 and later.
 
 """
 
-
-__version__  = '0.9.1'
-__revision__  = 'lowell87@gmail.com-20130711022321-doutxl7zyzuwss5a 2013-07-10 22:23:21 -0400 [0]'
+__version__ = '0.9.1'
+__revision__ = 'lowell87@gmail.com-20130711022321-doutxl7zyzuwss5a 2013-07-10 22:23:21 -0400 [0]'
 __author__ = "Lowell Alleman"
 __all__ = [
     "ConcurrentRotatingFileHandler",
 ]
-
 
 import os
 import sys
@@ -64,8 +62,6 @@ try:
     import codecs
 except ImportError:
     codecs = None
-
-
 
 # Question/TODO: Should we have a fallback mode if we can't load portalocker /
 # we should still be better off than with the standard RotattingFileHandler
@@ -80,8 +76,10 @@ from portalocker import lock, unlock, LOCK_EX, LOCK_NB, LockException
 class NullLogRecord(LogRecord):
     def __init__(self):
         pass
+
     def __getattr__(self, attr):
         return None
+
 
 class ConcurrentRotatingFileHandler(BaseRotatingHandler):
     """
@@ -90,6 +88,7 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
     write to the log file concurrently, but this may mean that the file will
     exceed the given size.
     """
+
     def __init__(self, filename, mode='a', maxBytes=0, backupCount=0,
                  encoding=None, debug=True, delay=0):
         """
@@ -142,7 +141,7 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
         # For debug mode, swap out the "_degrade()" method with a more a verbose one.
         if debug:
             self._degrade = self._degrade_debug
-    
+
     def _open_lockfile(self):
         # Use 'file.lock' and not 'file.log.lock' (Only handles the normal "*.log" case.)
         if self.baseFilename.endswith(".log"):
@@ -150,8 +149,8 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
         else:
             lock_file = self.baseFilename
         lock_file += ".lock"
-        self.stream_lock = open(lock_file,"w")
-    
+        self.stream_lock = open(lock_file, "w")
+
     def _open(self, mode=None):
         """
         Open the current base file with the (original) mode and encoding.
@@ -166,7 +165,7 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
         else:
             stream = codecs.open(self.baseFilename, mode, self.encoding)
         return stream
-    
+
     def _close(self):
         """ Close file stream.  Unlike close(), we don't tear anything down, we
         expect the log to be re-opened after rotation."""
@@ -178,7 +177,7 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
                     self.stream.close()
             finally:
                 self.stream = None
-    
+
     def acquire(self):
         """ Acquire thread and file locks.  Re-opening log for 'degraded' mode.
         """
@@ -202,7 +201,7 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
                     self.stream_lock = None
                     return
             lock(self.stream_lock, LOCK_EX)
-        # Stream will be opened as part by FileHandler.emit()
+            # Stream will be opened as part by FileHandler.emit()
 
     def release(self):
         """ Release file and thread locks. If in 'degraded' mode, close the
@@ -221,7 +220,7 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
             finally:
                 # release thread lock
                 Handler.release(self)
-    
+
     def close(self):
         """
         Close log stream and stream_lock. """
@@ -232,12 +231,12 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
         finally:
             self.stream_lock = None
             Handler.close(self)
-    
+
     def _degrade(self, degrade, msg, *args):
         """ Set degrade mode or not.  Ignore msg. """
         self._rotateFailed = degrade
-        del msg, args   # avoid pychecker warnings
-    
+        del msg, args  # avoid pychecker warnings
+
     def _degrade_debug(self, degrade, msg, *args):
         """ A more colorful version of _degade(). (This is enabled by passing
         "debug=True" at initialization).
@@ -252,7 +251,7 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
                 sys.stderr.write("Degrade mode - EXITING  - (pid=%d)   %s\n" %
                                  (os.getpid(), msg % args))
                 self._rotateFailed = False
-    
+
     def doRollover(self):
         """
         Do a rollover, as described in __init__().
@@ -266,24 +265,24 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
         try:
             # Determine if we can rename the log file or not. Windows refuses to
             # rename an open file, Unix is inode base so it doesn't care.
-            
+
             # Attempt to rename logfile to tempname:  There is a slight race-condition here, but it seems unavoidable
             tmpname = None
             while not tmpname or os.path.exists(tmpname):
-                tmpname = "%s.rotate.%08d" % (self.baseFilename, randint(0,99999999))
+                tmpname = "%s.rotate.%08d" % (self.baseFilename, randint(0, 99999999))
             try:
                 # Do a rename test to determine if we can successfully rename the log file
                 os.rename(self.baseFilename, tmpname)
             except (IOError, OSError):
                 exc_value = sys.exc_info()[1]
                 self._degrade(True, "rename failed.  File in use?  "
-                              "exception=%s", exc_value)
+                                    "exception=%s", exc_value)
                 return
-            
+
             # Q: Is there some way to protect this code from a KeboardInterupt?
             # This isn't necessarily a data loss issue, but it certainly does 
             # break the rotation process during stress testing.
-            
+
             # There is currently no mechanism in place to handle the situation
             # where one of these log files cannot be renamed. (Example, user
             # opens "logfile.3" in notepad); we could test rename each file, but
@@ -293,7 +292,7 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
                 sfn = "%s.%d" % (self.baseFilename, i)
                 dfn = "%s.%d" % (self.baseFilename, i + 1)
                 if os.path.exists(sfn):
-                    #print "%s -> %s" % (sfn, dfn)
+                    # print "%s -> %s" % (sfn, dfn)
                     if os.path.exists(dfn):
                         os.remove(dfn)
                     os.rename(sfn, dfn)
@@ -301,7 +300,7 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
             if os.path.exists(dfn):
                 os.remove(dfn)
             os.rename(tmpname, dfn)
-            #print "%s -> %s" % (self.baseFilename, dfn)
+            # print "%s -> %s" % (self.baseFilename, dfn)
             self._degrade(False, "Rotation completed")
         finally:
             # Re-open the output stream, but if "delay" is enabled then wait
@@ -309,7 +308,7 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
             # some usage patterns.
             if not self.delay:
                 self.stream = self._open()
-    
+
     def shouldRollover(self, record):
         """
         Determine if rollover should occur.
@@ -332,10 +331,10 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
             self.stream = self._open()
             return self._shouldRollover()
         return False
-    
+
     def _shouldRollover(self):
-        if self.maxBytes > 0:                   # are we rolling over?
-            self.stream.seek(0, 2)  #due to non-posix-compliant Windows feature
+        if self.maxBytes > 0:  # are we rolling over?
+            self.stream.seek(0, 2)  # due to non-posix-compliant Windows feature
             if self.stream.tell() >= self.maxBytes:
                 return True
             else:
@@ -346,4 +345,5 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
 # Publish this class to the "logging.handlers" module so that it can be use 
 # from a logging config file via logging.config.fileConfig().
 import logging.handlers
+
 logging.handlers.ConcurrentRotatingFileHandler = ConcurrentRotatingFileHandler

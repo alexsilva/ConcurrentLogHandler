@@ -232,10 +232,10 @@ if sys.version_info >= (3, 0):
     extra.update(use_2to3=True)
 
 from ez_setup import use_setuptools
+
 use_setuptools()
 
 from setuptools import setup
-
 
 VERSION = "0.9.1"
 classifiers = """\
@@ -252,31 +252,30 @@ License :: OSI Approved :: Apache Software License
 """
 doc = __doc__.splitlines()
 
-
 setup(name='ConcurrentLogHandler',
       version=VERSION,
       author="Lowell Alleman",
       author_email="lowell87@gmail.com",
       py_modules=[
-        "cloghandler",
-        "portalocker",
-        ],
-      package_dir={ '' : 'src', },
+          "cloghandler",
+          "portalocker",
+      ],
+      package_dir={'': 'src', },
       data_files=[
-        ('tests', ["stresstest.py"]),
-        ('docs', [
-            'README',
-            'LICENSE',
-            ]),
+          ('tests', ["stresstest.py"]),
+          ('docs', [
+              'README',
+              'LICENSE',
+          ]),
       ],
       url="http://launchpad.net/python-concurrent-log-handler",
-      license = "http://www.apache.org/licenses/LICENSE-2.0",
+      license="http://www.apache.org/licenses/LICENSE-2.0",
       description=doc.pop(0),
       long_description="\n".join(doc),
-      platforms = [ "nt", "posix" ],
-      keywords = "logging, windows, linux, unix, rotate, portalocker",
+      platforms=["nt", "posix"],
+      keywords="logging, windows, linux, unix, rotate, portalocker",
       classifiers=classifiers.splitlines(),
       zip_safe=True,
-      #test_suite=unittest.TestSuite,
+      # test_suite=unittest.TestSuite,
       **extra
-)
+      )
