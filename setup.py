@@ -237,7 +237,7 @@ use_setuptools()
 
 from setuptools import setup
 
-VERSION = "0.9.1"
+VERSION = "0.10.1"
 classifiers = """\
 Development Status :: 4 - Beta
 Topic :: System :: Logging
