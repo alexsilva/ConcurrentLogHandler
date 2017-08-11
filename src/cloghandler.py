@@ -90,7 +90,8 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
     """
 
     def __init__(self, filename, mode='a', maxBytes=0, backupCount=0,
-                 encoding=None, debug=True, delay=0):
+                 encoding=None, debug=True, delay=0,
+                 lock_filename=None):
         """
         Open the specified file and use it as the stream for logging.
 
@@ -134,6 +135,7 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
         # Absolute file name handling done by FileHandler since Python 2.5  
         BaseRotatingHandler.__init__(self, filename, mode, encoding, delay)
         self.delay = delay
+        self.lock_filename = lock_filename
         self._rotateFailed = False
         self.maxBytes = maxBytes
         self.backupCount = backupCount
@@ -144,11 +146,14 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
 
     def _open_lockfile(self):
         # Use 'file.lock' and not 'file.log.lock' (Only handles the normal "*.log" case.)
-        if self.baseFilename.endswith(".log"):
-            lock_file = self.baseFilename[:-4]
+        if self.lock_filename is None:
+            if self.baseFilename.endswith(".log"):
+                lock_file = self.baseFilename[:-4]
+            else:
+                lock_file = self.baseFilename
+            lock_file += ".lock"
         else:
-            lock_file = self.baseFilename
-        lock_file += ".lock"
+            lock_file = self.lock_filename
         self.stream_lock = open(lock_file, "w")
 
     def _open(self, mode=None):
