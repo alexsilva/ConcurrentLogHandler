@@ -46,8 +46,11 @@ class RotateLogStressTester:
     def getLogHandler(self, fn):
         """ Override this method if you want to test a different logging handler
         class. """
+        filename = os.path.splitext(os.path.basename(fn))[0]
+        filepath = os.path.join(os.path.abspath(os.path.join(os.path.dirname(fn), "..")), filename)
         return ConcurrentRotatingFileHandler(fn, 'a', self.rotateSize,
                                              self.rotateCount, delay=self.logger_delay,
+                                             lock_filename=filepath,
                                              debug=self.debug)
         # To run the test with the standard library's RotatingFileHandler:
         # from logging.handlers import RotatingFileHandler
