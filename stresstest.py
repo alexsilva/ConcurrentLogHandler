@@ -184,7 +184,7 @@ class ClientStderrThread(Thread):
                 line = self.queue.get_nowait()
         except Empty:
             pass
-        return '\n'.join(out)
+        return ''.join(out)
 
 
 class TestManager:
