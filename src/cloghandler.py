@@ -46,23 +46,17 @@ This module supports Python 2.6 and later.
 """
 import os
 import sys
-from random import randint
 from logging import Handler, LogRecord
 from logging.handlers import BaseRotatingHandler
+from random import randint
 
 try:
     import codecs
 except ImportError:
     codecs = None
 
-# Question/TODO: Should we have a fallback mode if we can't load portalocker /
-# we should still be better off than with the standard RotattingFileHandler
-# class, right? We do some rename checking... that should prevent some file
-# clobbering that the builtin class allows.
-
 # sibling module than handles all the ugly platform-specific details of file locking
-import portalocker
-
+from oslo_concurrency import lockutils
 
 __version__ = '0.10.1'
 __revision__ = 'lowell87@gmail.com-20130711022321-doutxl7zyzuwss5a 2013-07-10 22:23:21 -0400 [0]'
@@ -139,22 +133,23 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
         self._rotateFailed = False
         self.maxBytes = maxBytes
         self.backupCount = backupCount
-        self._open_lockfile()
         # For debug mode, swap out the "_degrade()" method with a more a verbose one.
         if debug:
             self._degrade = self._degrade_debug
+        self.external_lock = None
 
-    def _open_lockfile(self):
-        # Use 'file.lock' and not 'file.log.lock' (Only handles the normal "*.log" case.)
+    @property
+    def _lock_filename(self):
+        """Use 'file.lock' and not 'file.log.lock' (Only handles the normal "*.log" case.)"""
         if self.lock_filename is None:
             if self.baseFilename.endswith(".log"):
-                lock_file = self.baseFilename[:-4]
+                name = self.baseFilename[:-4]
             else:
-                lock_file = self.baseFilename
-            lock_file += ".lock"
+                name = self.baseFilename
+            name += ".lock"
         else:
-            lock_file = self.lock_filename
-        self.stream_lock = open(lock_file, "w")
+            name = self.lock_filename
+        return name
 
     def _open(self, mode=None):
         """
@@ -188,25 +183,9 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
         """
         # handle thread lock
         Handler.acquire(self)
-        # Issue a file lock.  (This is inefficient for multiple active threads
-        # within a single process. But if you're worried about high-performance,
-        # you probably aren't using this log handler.)
-        if self.stream_lock:
-            # If stream_lock=None, then assume close() was called or something
-            # else weird and ignore all file-level locks.
-            if self.stream_lock.closed:
-                # Daemonization can close all open file descriptors, see
-                # https://bugzilla.redhat.com/show_bug.cgi?id=952929
-                # Try opening the lock file again.  Should we warn() here?!?
-                try:
-                    self._open_lockfile()
-                except Exception:
-                    self.handleError(NullLogRecord())
-                    # Don't try to open the stream lock again
-                    self.stream_lock = None
-                    return
-            portalocker.lock(self.stream_lock, portalocker.LOCK_EX)
-            # Stream will be opened as part by FileHandler.emit()
+        self.external_lock = lockutils.lock(self._lock_filename,
+                                            lock_file_prefix=None,
+                                            external=True)
 
     def release(self):
         """ Release file and thread locks. If in 'degraded' mode, close the
@@ -218,8 +197,8 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
             self.handleError(NullLogRecord())
         finally:
             try:
-                if self.stream_lock and not self.stream_lock.closed:
-                    portalocker.unlock(self.stream_lock)
+                if self.external_lock:
+                    self.external_lock.release()
             except Exception:
                 self.handleError(NullLogRecord())
             finally:

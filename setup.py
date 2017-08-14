@@ -256,10 +256,8 @@ setup(name='ConcurrentLogHandler',
       version=VERSION,
       author="Lowell Alleman",
       author_email="lowell87@gmail.com",
-      py_modules=[
-          "cloghandler"
-      ],
-      install_requires=['portalocker'],
+      py_modules=["cloghandler"],
+      install_requires=['oslo.concurrency'],
       package_dir={'': 'src', },
       data_files=[
           ('tests', ["stresstest.py"]),
