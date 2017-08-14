@@ -210,13 +210,10 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
 
     def close(self):
         """
-        Close log stream and stream_lock. """
+        Close log stream."""
         try:
             self._close()
-            if not self.stream_lock.closed:
-                self.stream_lock.close()
         finally:
-            self.stream_lock = None
             Handler.close(self)
 
     def _degrade(self, degrade, msg, *args):
