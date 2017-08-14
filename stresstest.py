@@ -34,7 +34,7 @@ class RotateLogStressTester:
         self.sharedfile = sharedfile
         self.uniquefile = uniquefile
         self.name = name
-        self.writeLoops = 10
+        self.writeLoops = 1000
         self.rotateSize = 128 * 1024
         self.rotateCount = ROTATE_COUNT
         self.random_sleep_mode = False
@@ -94,7 +94,7 @@ class RotateLogStressTester:
             logfunc(msg, randint(0, 99999999))
             if self.random_sleep_mode and c % 1000 == 0:
                 # Sleep from 0-15 seconds
-                s = randint(1, 3)
+                s = randint(1, 15)
                 print("PID %d sleeping for %d seconds" % (os.getpid(), s))
                 sleep(s)
                 # break
