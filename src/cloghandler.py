@@ -179,10 +179,7 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
                 self.stream = None
 
     def acquire(self):
-        """ Acquire thread and file locks.  Re-opening log for 'degraded' mode.
-        """
-        # handle thread lock
-        Handler.acquire(self)
+        """ Acquire thread and file locks.  Re-opening log for 'degraded' mode."""
         try:
             lock_filepath = os.path.dirname(self._lock_filename)
             lock_filename = os.path.basename(self._lock_filename)
@@ -206,9 +203,6 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
                     self.external_lock.release()
             except Exception:
                 self.handleError(NullLogRecord())
-            finally:
-                # release thread lock
-                Handler.release(self)
 
     def close(self):
         """
