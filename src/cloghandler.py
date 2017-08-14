@@ -183,9 +183,12 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
         """
         # handle thread lock
         Handler.acquire(self)
-        self.external_lock = lockutils.lock(self._lock_filename,
-                                            lock_file_prefix=None,
-                                            external=True)
+        try:
+            self.external_lock = lockutils.lock(self._lock_filename,
+                                                lock_file_prefix=None,
+                                                external=True)
+        except Exception:
+            self.handleError(NullLogRecord())
 
     def release(self):
         """ Release file and thread locks. If in 'degraded' mode, close the
