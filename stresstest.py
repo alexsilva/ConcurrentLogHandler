@@ -12,7 +12,9 @@ multiple threads.
 
 """
 import os
+import shutil
 import sys
+import traceback
 from Queue import Queue, Empty
 from subprocess import Popen, PIPE
 from threading import Thread
@@ -268,6 +270,23 @@ def main_runner(args):
     this_script = args[0]
     (options, args) = parser.parse_args(args)
     options.path = os.path.abspath(options.path)
+
+    # remove the test dir if existente (aswer)
+    if os.path.isdir(options.path):
+        try:
+            path = os.path.abspath(options.path)
+            while True:
+                response = raw_input("Remove existing test directory \"{}\" ? (Y/n) ".format(path))
+                response = response.lower()
+                if response not in ('y', 'n'):
+                    print "Try 'y' or 'n'"
+                    continue
+                if response.lower() == "y":
+                    shutil.rmtree(path)
+                break
+        except os.error:
+            traceback.print_stack()
+
     if not os.path.isdir(options.path):
         os.makedirs(options.path)
 
