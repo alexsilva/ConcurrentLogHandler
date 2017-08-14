@@ -164,6 +164,7 @@ def main_client(args):
 
 class ClientStderrThread(Thread):
     """Object used to print the output of a process in case of error"""
+
     def __init__(self, proc):
         Thread.__init__(self)
         self.queue = Queue()
@@ -176,7 +177,7 @@ class ClientStderrThread(Thread):
         self.stderr.close()
 
     def __str__(self):
-        out = ['-' * 25, 'Process ID({})'.format(self.proc.pid)]
+        out = []
         try:
             line = self.queue.get_nowait()
             while line:
@@ -233,9 +234,16 @@ class TestManager:
     def checkExitCodes(self):
         for cp in self.tests:
             if cp.popen.poll() != 0:
-                print cp.cthread
                 return False
         return True
+
+    def print_errors(self):
+        print >> sys.stderr, "One or more of the child process has failed.\nAborting test.\n"
+        for cp in self.tests:
+            if cp.popen.poll() != 0:
+                print >> sys.stderr, '-' * 25
+                print >> sys.stderr, 'Process ({0.popen.pid})'.format(cp)
+                print >> sys.stderr, cp.cthread
 
 
 def unified_diff(a, b, out=sys.stdout):
@@ -285,8 +293,7 @@ def main_runner(args):
     manager.wait()
     # Check children exit codes
     if not manager.checkExitCodes():
-        sys.stderr.write("One or more of the child process has failed.\n"
-                         "Aborting test.\n")
+        manager.print_errors()
         sys.exit(2)
 
     client_combo = os.path.join(options.path, "client.log.combo")
