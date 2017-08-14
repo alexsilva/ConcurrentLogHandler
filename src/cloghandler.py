@@ -44,14 +44,6 @@ See the README file for an example usage of this module.
 This module supports Python 2.6 and later.
 
 """
-
-__version__ = '0.10.1'
-__revision__ = 'lowell87@gmail.com-20130711022321-doutxl7zyzuwss5a 2013-07-10 22:23:21 -0400 [0]'
-__author__ = "Lowell Alleman"
-__all__ = [
-    "ConcurrentRotatingFileHandler",
-]
-
 import os
 import sys
 from random import randint
@@ -70,6 +62,14 @@ except ImportError:
 
 # sibling module than handles all the ugly platform-specific details of file locking
 import portalocker
+
+
+__version__ = '0.10.1'
+__revision__ = 'lowell87@gmail.com-20130711022321-doutxl7zyzuwss5a 2013-07-10 22:23:21 -0400 [0]'
+__author__ = "Lowell Alleman"
+__all__ = [
+    "ConcurrentRotatingFileHandler",
+]
 
 
 # Workaround for handleError() in Python 2.7+ where record is written to stderr
