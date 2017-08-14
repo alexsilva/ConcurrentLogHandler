@@ -238,7 +238,6 @@ class TestManager:
         return True
 
     def print_errors(self):
-        print >> sys.stderr, "One or more of the child process has failed.\nAborting test.\n"
         for cp in self.tests:
             if cp.popen.poll() != 0:
                 print >> sys.stderr, '-' * 25
@@ -293,7 +292,9 @@ def main_runner(args):
     manager.wait()
     # Check children exit codes
     if not manager.checkExitCodes():
-        manager.print_errors()
+        print >> sys.stderr, "One or more of the child process has failed.\nAborting test.\n"
+        if options.debug:
+            manager.print_errors()
         sys.exit(2)
 
     client_combo = os.path.join(options.path, "client.log.combo")
