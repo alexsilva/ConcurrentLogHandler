@@ -11,19 +11,22 @@ multiple threads.
 
 
 """
+import os
+import sys
+from Queue import Queue, Empty
+from subprocess import Popen, PIPE
+from threading import Thread
+from time import sleep
+
+# local lib; for testing
+from cloghandler import ConcurrentRotatingFileHandler
 
 __version__ = '$Id$'
 __author__ = 'Lowell Alleman'
 
-import os
-import sys
-from subprocess import call, Popen, STDOUT
-from time import sleep
-
 ROTATE_COUNT = 5000
 
-# local lib; for testing
-from cloghandler import ConcurrentRotatingFileHandler
+ON_POSIX = 'posix' in sys.builtin_module_names
 
 
 class RotateLogStressTester:
@@ -31,7 +34,7 @@ class RotateLogStressTester:
         self.sharedfile = sharedfile
         self.uniquefile = uniquefile
         self.name = name
-        self.writeLoops = 100000
+        self.writeLoops = 10
         self.rotateSize = 128 * 1024
         self.rotateCount = ROTATE_COUNT
         self.random_sleep_mode = False
@@ -89,10 +92,9 @@ class RotateLogStressTester:
             msg = choice(msgs)
             logfunc = choice(logfuncts)
             logfunc(msg, randint(0, 99999999))
-
             if self.random_sleep_mode and c % 1000 == 0:
                 # Sleep from 0-15 seconds
-                s = randint(1, 15)
+                s = randint(1, 3)
                 print("PID %d sleeping for %d seconds" % (os.getpid(), s))
                 sleep(s)
                 # break
@@ -160,10 +162,35 @@ def main_client(args):
     print("We are done  pid=%d" % os.getpid())
 
 
+class ClientStderrThread(Thread):
+    """Object used to print the output of a process in case of error"""
+    def __init__(self, proc):
+        Thread.__init__(self)
+        self.queue = Queue()
+        self.proc = proc
+        self.stderr = proc.stderr
+
+    def run(self):
+        for line in iter(self.stderr.readline, b''):
+            self.queue.put(line)
+        self.stderr.close()
+
+    def __str__(self):
+        out = ['-' * 25, 'Process ID({})'.format(self.proc.pid)]
+        try:
+            line = self.queue.get_nowait()
+            while line:
+                out.append(line)
+                line = self.queue.get_nowait()
+        except Empty:
+            pass
+        return '\n'.join(out)
+
+
 class TestManager:
     class ChildProc(object):
         """ Very simple child container class."""
-        __slots__ = ["popen", "sharedfile", "clientfile"]
+        __slots__ = ["popen", "sharedfile", "clientfile", "cthread"]
 
         def __init__(self, **kwargs):
             self.update(**kwargs)
@@ -176,8 +203,16 @@ class TestManager:
         self.tests = []
 
     def launchPopen(self, *args, **kwargs):
+        kwargs.setdefault('stderr', PIPE)
+        kwargs.setdefault('close_fds', ON_POSIX)
         proc = Popen(*args, **kwargs)
-        cp = self.ChildProc(popen=proc)
+
+        # process stderr
+        cthread = ClientStderrThread(proc)
+        cthread.setDaemon(True)
+        cthread.start()
+
+        cp = self.ChildProc(popen=proc, cthread=cthread)
         self.tests.append(cp)
         return cp
 
@@ -198,6 +233,7 @@ class TestManager:
     def checkExitCodes(self):
         for cp in self.tests:
             if cp.popen.poll() != 0:
+                print cp.cthread
                 return False
         return True
 
