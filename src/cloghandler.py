@@ -184,9 +184,11 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
         # handle thread lock
         Handler.acquire(self)
         try:
-            self.external_lock = lockutils.lock(self._lock_filename,
-                                                lock_file_prefix=None,
-                                                external=True)
+            lock_filepath = os.path.dirname(self._lock_filename)
+            lock_filename = os.path.basename(self._lock_filename)
+            self.external_lock = lockutils.external_lock(lock_filename,
+                                                         lock_path=lock_filepath)
+            self.external_lock.acquire()
         except Exception:
             self.handleError(NullLogRecord())
 
@@ -200,7 +202,7 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
             self.handleError(NullLogRecord())
         finally:
             try:
-                if self.external_lock:
+                if self.external_lock and self.external_lock.acquired:
                     self.external_lock.release()
             except Exception:
                 self.handleError(NullLogRecord())
