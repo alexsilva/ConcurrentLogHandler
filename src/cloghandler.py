@@ -69,7 +69,7 @@ except ImportError:
 # clobbering that the builtin class allows.
 
 # sibling module than handles all the ugly platform-specific details of file locking
-from portalocker import lock, unlock, LOCK_EX, LOCK_NB, LockException
+import portalocker
 
 
 # Workaround for handleError() in Python 2.7+ where record is written to stderr
@@ -205,7 +205,7 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
                     # Don't try to open the stream lock again
                     self.stream_lock = None
                     return
-            lock(self.stream_lock, LOCK_EX)
+            portalocker.lock(self.stream_lock, portalocker.LOCK_EX)
             # Stream will be opened as part by FileHandler.emit()
 
     def release(self):
@@ -219,7 +219,7 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
         finally:
             try:
                 if self.stream_lock and not self.stream_lock.closed:
-                    unlock(self.stream_lock)
+                    portalocker.unlock(self.stream_lock)
             except Exception:
                 self.handleError(NullLogRecord())
             finally:

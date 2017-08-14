@@ -257,9 +257,9 @@ setup(name='ConcurrentLogHandler',
       author="Lowell Alleman",
       author_email="lowell87@gmail.com",
       py_modules=[
-          "cloghandler",
-          "portalocker",
+          "cloghandler"
       ],
+      install_requires=['portalocker'],
       package_dir={'': 'src', },
       data_files=[
           ('tests', ["stresstest.py"]),
