@@ -257,7 +257,7 @@ setup(name='ConcurrentLogHandler',
       author="Lowell Alleman",
       author_email="lowell87@gmail.com",
       py_modules=["cloghandler"],
-      install_requires=['oslo.concurrency'],
+      install_requires=['filelock'],
       package_dir={'': 'src', },
       data_files=[
           ('tests', ["stresstest.py"]),
