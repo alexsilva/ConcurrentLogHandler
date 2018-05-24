@@ -181,9 +181,7 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
     def acquire(self):
         """ Acquire thread and file locks.  Re-opening log for 'degraded' mode."""
         try:
-            lock_filepath = os.path.dirname(self._lock_filename)
-            lock_filename = os.path.basename(self._lock_filename)
-            self.external_lock = FileLock(lock_filename)
+            self.external_lock = FileLock(self._lock_filename)
             self.external_lock.acquire()
         except Exception:
             self.handleError(NullLogRecord())
