@@ -56,7 +56,7 @@ except ImportError:
     codecs = None
 
 # sibling module than handles all the ugly platform-specific details of file locking
-from filelock import FileLock
+from oslo_concurrency import lockutils
 
 __version__ = '0.10.1'
 __revision__ = 'lowell87@gmail.com-20130711022321-doutxl7zyzuwss5a 2013-07-10 22:23:21 -0400 [0]'
@@ -181,7 +181,10 @@ class ConcurrentRotatingFileHandler(BaseRotatingHandler):
     def acquire(self):
         """ Acquire thread and file locks.  Re-opening log for 'degraded' mode."""
         try:
-            self.external_lock = FileLock(self._lock_filename)
+            lock_filepath = os.path.dirname(self._lock_filename)
+            lock_filename = os.path.basename(self._lock_filename)
+            self.external_lock = lockutils.external_lock(lock_filename,
+                                                         lock_path=lock_filepath)
             self.external_lock.acquire()
         except Exception:
             self.handleError(NullLogRecord())
